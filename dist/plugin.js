@@ -46,7 +46,7 @@ function () {
 
   var map = W.require('map');
 
-  var points = [['Yaşma', 'city-2', 41.689, 49.39], ['Xızı-2', 'city-2', 41.7, 49.38], ['Xızı-3', 'city-3', 41.71, 49.375], ['Qobustan', 'city-3', 41.0, 48.81], ['Pereküşkül', 'city-1', 40.2, 49.2857], ['Area-7', 'city-2', 39.9, 49.0]];
+  var points = [['Yaşma', 'city-2', 49.39, 41.689], ['Xızı-2', 'city-2', 41.7, 49.38], ['Xızı-3', 'city-3', 41.71, 49.375], ['Qobustan', 'city-3', 41.0, 48.81], ['Pereküşkül', 'city-1', 40.2, 49.2857], ['Area-7', 'city-2', 39.9, 49.0]];
   var markers = null;
   var icon = L.divIcon({
     className: 'weather-at-city',
