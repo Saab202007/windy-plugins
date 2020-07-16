@@ -1,61 +1,123 @@
-'use strict';
+"use strict";
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 /**
  * This is main plugin loading function
  * Feel free to write your own compiler
  */
 W.loadPlugin(
-    /* Mounting options */
-    {
-        name: 'windy-plugin-examples',
-        version: '0.2.0',
-        author: 'Windyty, S.E.',
-        repository: {
-            type: 'git',
-            url: 'git+https://github.com/windycom/windy-plugins',
-        },
-        description:
-            'Windy plugin system enables anyone, with basic knowledge of Javascript to enhance Windy with new functionality (default desc).',
-        displayName: 'Loading backend data',
-        hook: 'menu',
-        className: 'plugin-lhpane plugin-mobile-fullscreen',
-        exclusive: 'lhpane',
-    },
-    /* HTML */
-    '<div class="mobile-header">This is title for mobile devices</div> <div class="plugin-content"> <h2>Loading data from Windy API</h2> <p>This plugin demonstrates communication with backend API and retrieving varions parameters</p> <p>1) Get your API key <a hrer="https://api4.windy.com/api-key/">here</a>. Ignore "Allowed domains" fields.</p> <p>2) Use <b>@windy/pluginDataLoader</b> module to retrieve the data.</p> <hr> <p>Forecast data:</p> <p data-ref="forecast" class="size-xxs"></p> <hr> <p>Air data:</p> <p data-ref="airData" class="size-xxs"></p> <hr> <p>Do you want to add additional data to our backend API? Let us know <a href="https://community.windy.com/category/21/windy-plugins">here</a></p> </div>',
-    /* CSS */
-    '.onwindy-plugin-examples .left-border{left:400px}.onwindy-plugin-examples #search{display:none}#windy-plugin-examples{width:400px}#windy-plugin-examples .plugin-content{padding:20px 15px 15px 15px;font-size:14px;line-height:1.6}#windy-plugin-examples .plugin-content a{color:#9D0300}',
-    /* Constructor */
-    function() {
-        var _this = this;
+/* Mounting options */
+{
+  "name": "windy-plugin-examples",
+  "version": "0.5.0",
+  "author": "Windyty, S.E.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/windycom/windy-plugins"
+  },
+  "description": "Windy plugin system enables anyone, with basic knowledge of Javascript to enhance Windy with new functionality (default desc).",
+  "displayName": "Interpolator",
+  "hook": "menu"
+},
+/* HTML */
+'',
+/* CSS */
+'.weather-at-city{background:#00000096;padding:.1em .8em;border-radius:.3em}',
+/* Constructor */
+function () {
+  var bcast = W.require('broadcast');
 
-        var map = W.require('map');
+  var store = W.require('store');
 
-        var pluginDataLoader = W.require('pluginDataLoader');
+  var _ = W.require('utils');
 
-        var options = {
-            key: 'RxcwkWO2XWsfEbdidcsskbyWqhToAwLx',
-            plugin: 'windy-plugin-examples',
-        };
-        var load = pluginDataLoader(options);
+  var interpolator = W.require('interpolator');
 
-        this.onopen = function() {
-            map.setView([50, 14]);
-            var dataOptions = {
-                model: 'gfs',
-                lat: 50,
-                lon: 14,
-            };
-            load('forecast', dataOptions).then(function(_ref) {
-                var data = _ref.data;
-                _this.refs.forecast.innerHTML = JSON.stringify(data);
-                console.log(data);
-            });
-            load('airData', dataOptions).then(function(_ref2) {
-                var data = _ref2.data;
-                _this.refs.airData.innerHTML = JSON.stringify(data);
-                console.log(data);
-            });
-        };
+  var map = W.require('map');
+
+  var points = [['Tours', 'city-2', 0.689, 47.39], ['Le Mans', 'city-2', 0.2, 48.008], ['Amilly', 'city-3', 2.767, 47.978], ['Bourges', 'city-3', 2.399, 47.081], ['Paris', 'city-1', 2.351, 48.857], ['Chartres', 'city-2', 1.487, 48.447]];
+  var markers = null;
+  var icon = L.divIcon({
+    className: 'weather-at-city',
+    iconSize: [80, 40],
+    iconAnchor: [40, 20]
+  });
+
+  var createPopup = function createPopup(lat, lon, name) {
+    var marker = L.marker([lat, lon], {
+      icon: icon
+    }).addTo(map);
+    marker._icon.innerHTML = name;
+    return marker;
+  };
+
+  var interpolateValues = function interpolateValues() {
+    if (store.get('overlay') !== 'wind') {
+      console.warn('I can iterpolate only Wind sorry');
+      return;
     }
-);
+
+    interpolator(function (interpolate) {
+      markers.forEach(function (m, i) {
+        var _points$i = _slicedToArray(points[i], 4),
+            name = _points$i[0],
+            cls = _points$i[1],
+            lon = _points$i[2],
+            lat = _points$i[3];
+
+        var values = interpolate.call(interpolator, {
+          lat: lat,
+          lon: lon
+        });
+
+        if (Array.isArray(values)) {
+          var _$wind2obj = _.wind2obj(values),
+              wind = _$wind2obj.wind,
+              dir = _$wind2obj.dir;
+
+          m._icon.innerHTML = "".concat(name, "<br />").concat(Math.round(wind), "m/s&nbsp;").concat(dir);
+        } else {
+          console.warn("Unable to interpolate value for ".concat(lat, ", ").concat(lon, "."));
+        }
+      });
+    });
+  };
+
+  this.onopen = function () {
+    map.setView({
+      lat: 47.3,
+      lng: 2
+    }, 7);
+    store.set('overlay', 'wind');
+
+    if (!markers) {
+      markers = points.map(function (p) {
+        return createPopup(p[3], p[2], p[0]);
+      });
+      bcast.on('redrawFinished', interpolateValues);
+    }
+
+    interpolateValues();
+  };
+
+  this.onclose = function () {
+    if (markers) {
+      markers.forEach(function (m) {
+        return map.removeLayer(m);
+      });
+      bcast.off('redrawFinished', interpolateValues);
+      markers = null;
+    }
+  };
+});
